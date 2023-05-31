@@ -56,10 +56,6 @@ class Dataset:
             num_test = int(test_size * num_data)
             num_train = num_data - num_test
             train_dataset, test_dataset = torch.utils.data.random_split(dataset, [num_train, num_test])
-            train_dataset = datasets.CIFAR10(
-                '/data/cifar', train=True, download=True, transform=data_transform)
-            test_dataset = datasets.CIFAR10(
-                '/data/cifar', train=False, download=True, transform=data_transform)
 
             self.train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
 
