@@ -7,6 +7,8 @@ from torchvision import datasets, transforms
 from capsnet import CapsNet
 from data_loader import Dataset
 from tqdm import tqdm
+from torchbearer.callbacks import EarlyStopping
+from numpy import prod
 
 USE_CUDA = True if torch.cuda.is_available() else False
 BATCH_SIZE = 100
@@ -104,7 +106,13 @@ def train(model, optimizer, train_loader, epoch):
     tqdm.write('Epoch: [{}/{}], train loss: {:.6f}'.format(epoch,N_EPOCHS,total_loss / len(train_loader.dataset)))
 
 
+
 def test(capsule_net, test_loader, epoch):
+    global early_stopping
+    global best_test_acc
+    global best_epoch
+    global epochs_no_improve
+    
     capsule_net.eval()
     test_loss = 0
     correct = 0
@@ -127,10 +135,22 @@ def test(capsule_net, test_loader, epoch):
         "Epoch: [{}/{}], test accuracy: {:.6f}, loss: {:.6f}".format(epoch, N_EPOCHS, correct / len(test_loader.dataset),
                                                                   test_loss / len(test_loader)))
 
+    accuracy = correct / len(test_loader.dataset)
+
+    if accuracy > best_test_acc:
+      best_test_acc = accuracy
+      best_epoch = epoch
+      epochs_no_improve = 0
+    else:
+      epochs_no_improve += 1
+      if epochs_no_improve == early_stopping.patience:
+        print('Early Stopping')
+        print(f'The best test accuracy was {best_test_acc} in epoch {best_epoch}')
+        return
 
 if __name__ == '__main__':
     torch.manual_seed(1)
-    dataset = 'cifar10'
+    dataset = 'Jamones'
     # dataset = 'mnist'
     config = Config(dataset)
     mnist = Dataset(dataset, BATCH_SIZE)
@@ -143,6 +163,17 @@ if __name__ == '__main__':
 
     optimizer = torch.optim.Adam(capsule_net.parameters())
 
+    early_stopping = EarlyStopping(patience=10)
+    best_test_acc = 0
+    best_epoch = 0
+    epochs_no_improve = 0
+
+    print('Num params:', sum([prod(p.size())
+              for p in capsule_net.parameters()]))
+
     for e in range(1, N_EPOCHS + 1):
         train(capsule_net, optimizer, mnist.train_loader, e)
         test(capsule_net, mnist.test_loader, e)
+
+        if epochs_no_improve == early_stopping.patience:
+          break
