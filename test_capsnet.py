@@ -139,7 +139,7 @@ def test(capsule_net, test_loader, epoch):
     correct = 0
     for batch_id, (data, target) in enumerate(test_loader):
 
-        target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
+        target = torch.sparse.torch.eye(26).index_select(dim=0, index=target)
         data, target = Variable(data), Variable(target)
 
         if USE_CUDA:
