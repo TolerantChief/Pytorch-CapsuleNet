@@ -41,7 +41,7 @@ class PrimaryCaps(nn.Module):
 
 
 class DigitCaps(nn.Module):
-    def __init__(self, num_capsules=10, num_routes=32 * 6 * 6, in_channels=8, out_channels=16):
+    def __init__(self, num_capsules=26, num_routes=32 * 6 * 6, in_channels=8, out_channels=16):
         super(DigitCaps, self).__init__()
 
         self.in_channels = in_channels
@@ -88,7 +88,7 @@ class Decoder(nn.Module):
         self.input_height = input_height
         self.input_channel = input_channel
         self.reconstraction_layers = nn.Sequential(
-            nn.Linear(16 * 10, 512),
+            nn.Linear(16 * 26, 512),
             nn.ReLU(inplace=True),
             nn.Linear(512, 1024),
             nn.ReLU(inplace=True),
@@ -101,7 +101,7 @@ class Decoder(nn.Module):
         classes = F.softmax(classes, dim=0)
 
         _, max_length_indices = classes.max(dim=1)
-        masked = Variable(torch.sparse.torch.eye(10))
+        masked = Variable(torch.sparse.torch.eye(26))
         if USE_CUDA:
             masked = masked.cuda()
         masked = masked.index_select(dim=0, index=Variable(max_length_indices.squeeze(1).data))
