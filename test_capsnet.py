@@ -12,8 +12,8 @@ from numpy import prod
 
 USE_CUDA = True if torch.cuda.is_available() else False
 BATCH_SIZE = 100
-N_EPOCHS = 30
-LEARNING_RATE = 0.01
+N_EPOCHS = 500
+LEARNING_RATE = 0.001
 MOMENTUM = 0.9
 
 '''
@@ -69,8 +69,29 @@ class Config:
             self.input_width = 32
             self.input_height = 32
 
-        elif dataset == 'your own dataset':
-            pass
+        elif dataset == 'Jamones':
+            # CNN (cnn)
+            self.cnn_in_channels = 3
+            self.cnn_out_channels = 256
+            self.cnn_kernel_size = 9
+
+            # Primary Capsule (pc)
+            self.pc_num_capsules = 8
+            self.pc_in_channels = 256
+            self.pc_out_channels = 32
+            self.pc_kernel_size = 9
+            self.pc_num_routes = 32 * 8 * 8
+
+            # Digit Capsule (dc)
+            self.dc_num_capsules = 26
+            self.dc_num_routes = 32 * 8 * 8
+            self.dc_in_channels = 8
+            self.dc_out_channels = 16
+
+            # Decoder
+            self.input_width = 32
+            self.input_height = 32
+
 
 
 def train(model, optimizer, train_loader, epoch):
@@ -80,7 +101,7 @@ def train(model, optimizer, train_loader, epoch):
     total_loss = 0
     for batch_id, (data, target) in enumerate(tqdm(train_loader)):
 
-        target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
+        target = torch.sparse.torch.eye(26).index_select(dim=0, index=target)
         data, target = Variable(data), Variable(target)
 
         if USE_CUDA:
@@ -149,7 +170,7 @@ def test(capsule_net, test_loader, epoch):
         return
 
 if __name__ == '__main__':
-    torch.manual_seed(1)
+    #torch.manual_seed(1)
     dataset = 'Jamones'
     # dataset = 'mnist'
     config = Config(dataset)
