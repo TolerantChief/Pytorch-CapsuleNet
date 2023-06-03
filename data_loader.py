@@ -58,9 +58,9 @@ class Dataset:
             num_train = num_data - num_test
             train_dataset, test_dataset = torch.utils.data.random_split(dataset, [num_train, num_test])
 
-            self.train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
+            self.train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=_batch_size, shuffle=True)
 
-            self.test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False)
+            self.test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=_batch_size, shuffle=False)
 
 
         elif dataset == 'office-caltech':
