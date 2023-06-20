@@ -216,7 +216,7 @@ def test(capsule_net, test_loader, epoch):
         plt.legend()
 
         plt.tight_layout()  # To ensure subplots are properly arranged
-        plt.show()
+        plt.savefig('accuracy_loss.png')
         return
 
 if __name__ == '__main__':
