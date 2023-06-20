@@ -9,6 +9,8 @@ from data_loader import Dataset
 from tqdm import tqdm
 from torchbearer.callbacks import EarlyStopping
 from numpy import prod
+from mem_profile import get_gpu_memory_map
+import matplotlib.pyplot as plt
 
 USE_CUDA = True if torch.cuda.is_available() else False
 BATCH_SIZE = 100
@@ -95,6 +97,10 @@ class Config:
 
 
 def train(model, optimizer, train_loader, epoch):
+    global current_memory_usage
+    global max_memory_usage
+    global history
+
     capsule_net = model
     capsule_net.train()
     n_batch = len(list(enumerate(train_loader)))
@@ -113,6 +119,7 @@ def train(model, optimizer, train_loader, epoch):
         loss.backward()
         optimizer.step()
         correct = sum(np.argmax(masked.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1))
+        total_accuracy += correct
         train_loss = loss.item()
         total_loss += train_loss
         if batch_id % 100 == 0:
@@ -126,6 +133,13 @@ def train(model, optimizer, train_loader, epoch):
                 ))
     tqdm.write('Epoch: [{}/{}], train loss: {:.6f}'.format(epoch,N_EPOCHS,total_loss / len(train_loader.dataset)))
 
+    history['train_loss'].append(total_loss / len(train_loader.dataset))
+    history['train_acc'].append(total_accuracy / len(train_loader.dataset))
+
+    current_memory_usage = get_gpu_memory_map()[0]
+    if current_memory_usage > max_memory_usage:
+        max_memory_usage = current_memory_usage
+
 
 
 def test(capsule_net, test_loader, epoch):
@@ -133,6 +147,9 @@ def test(capsule_net, test_loader, epoch):
     global best_test_acc
     global best_epoch
     global epochs_no_improve
+    global current_memory_usage
+    global max_memory_usage
+    global dataset
     
     capsule_net.eval()
     test_loss = 0
@@ -156,6 +173,13 @@ def test(capsule_net, test_loader, epoch):
         "Epoch: [{}/{}], test accuracy: {:.6f}, loss: {:.6f}".format(epoch, N_EPOCHS, correct / len(test_loader.dataset),
                                                                   test_loss / len(test_loader)))
 
+    history['test_acc'].append(correct / len(test_loader.dataset))
+    history['test_loss'].append(test_loss / len(test_loader))
+
+    current_memory_usage = get_gpu_memory_map()[0]
+    if current_memory_usage > max_memory_usage:
+        max_memory_usage = current_memory_usage
+
     accuracy = correct / len(test_loader.dataset)
 
     if accuracy > best_test_acc:
@@ -167,6 +191,32 @@ def test(capsule_net, test_loader, epoch):
       if epochs_no_improve == early_stopping.patience:
         print('Early Stopping')
         print(f'The best test accuracy was {best_test_acc} in epoch {best_epoch}')
+
+        print('max. memory usage: ', max_memory_usage)
+
+        epochs = range(1, epoch + 1)
+        plt.figure()
+
+        plt.subplot(1, 2, 1)  # 1 row, 2 column, subplot 1 for accuracy
+        # Plot accuracy
+        plt.plot(epochs, history['train_acc'], label='Training Accuracy')
+        plt.plot(epochs, history['val_acc'], label='Validation Accuracy')
+        plt.xlabel('Epochs')
+        plt.ylabel('Accuracy')
+        plt.title(f'CapsNet: {dataset}')
+        plt.legend()
+
+        plt.subplot(1, 2, 2)  # 2 rows, 1 column, subplot 2 for loss
+        # Plot loss
+        plt.plot(epochs, history['train_loss'], label='Training Loss')
+        plt.plot(epochs, history['val_loss'], label='Validation Loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.title(f'CapsNet: {dataset}')
+        plt.legend()
+
+        plt.tight_layout()  # To ensure subplots are properly arranged
+        plt.show()
         return
 
 if __name__ == '__main__':
@@ -189,9 +239,13 @@ if __name__ == '__main__':
     best_epoch = 0
     epochs_no_improve = 0
 
+    current_memory_usage = get_gpu_memory_map()[0]
+    max_memory_usage = 0
+
     print('Num params:', sum([prod(p.size())
               for p in capsule_net.parameters()]))
 
+    history = {'train_loss': [], 'train_acc': [], 'test_loss': [], 'test_acc': []}
     for e in range(1, N_EPOCHS + 1):
         train(capsule_net, optimizer, mnist.train_loader, e)
         test(capsule_net, mnist.test_loader, e)
