@@ -200,7 +200,7 @@ def test(capsule_net, test_loader, epoch):
         plt.subplot(1, 2, 1)  # 1 row, 2 column, subplot 1 for accuracy
         # Plot accuracy
         plt.plot(epochs, history['train_acc'], label='Training Accuracy')
-        plt.plot(epochs, history['val_acc'], label='Validation Accuracy')
+        plt.plot(epochs, history['test_acc'], label='Validation Accuracy')
         plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
         plt.title(f'CapsNet: {dataset}')
@@ -209,7 +209,7 @@ def test(capsule_net, test_loader, epoch):
         plt.subplot(1, 2, 2)  # 2 rows, 1 column, subplot 2 for loss
         # Plot loss
         plt.plot(epochs, history['train_loss'], label='Training Loss')
-        plt.plot(epochs, history['val_loss'], label='Validation Loss')
+        plt.plot(epochs, history['test_loss'], label='Validation Loss')
         plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.title(f'CapsNet: {dataset}')
