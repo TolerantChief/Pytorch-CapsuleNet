@@ -37,7 +37,7 @@ class Dataset:
             self.test_loader = torch.utils.data.DataLoader(
                 test_dataset, batch_size=_batch_size, shuffle=False)
         elif dataset == 'Jamones':
-            img_size = 50
+            img_size = 32
             data_transform = transforms.Compose([
                 transforms.Resize((img_size,img_size)),
                 transforms.RandomHorizontalFlip(),
