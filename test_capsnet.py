@@ -105,6 +105,7 @@ def train(model, optimizer, train_loader, epoch):
     capsule_net.train()
     n_batch = len(list(enumerate(train_loader)))
     total_loss = 0
+    total_accuracy = 0
     for batch_id, (data, target) in enumerate(tqdm(train_loader)):
 
         target = torch.sparse.torch.eye(26).index_select(dim=0, index=target)
